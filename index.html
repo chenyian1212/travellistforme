@@ -6,6 +6,8 @@
     <title>旅人時光筆記 | Traveler's Journal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <!-- 引入拖拉功能庫 -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
     <style>
         :root {
             --caramel-deep: #4A2C18; /* 深焦糖色 */
@@ -19,7 +21,6 @@
         body {
             font-family: 'Noto Serif TC', serif;
             background-color: var(--caramel-deep);
-            /* 模擬老式膠卷的微顆粒質感 */
             background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100' height='100' filter='url(%23n)' opacity='0.08'/%3E%3C/svg%3E");
             color: var(--cream-gold);
             padding-bottom: 120px;
@@ -27,12 +28,6 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        .font-black-coffee {
-            color: var(--cream-gold);
-            font-weight: 900;
-        }
-
-        /* 昭和風格卡片：硬挺、紙感 */
         .retro-card {
             background: var(--aged-paper);
             border-radius: 12px;
@@ -41,7 +36,6 @@
             color: var(--ink-black);
         }
 
-        /* 天氣動畫：光影律動 */
         @keyframes sun-glow {
             0%, 100% { transform: scale(1); filter: brightness(1); }
             50% { transform: scale(1.1); filter: brightness(1.3); }
@@ -72,7 +66,6 @@
         }
         input:focus { outline: none; border-bottom: 2px solid var(--ink-black); }
 
-        /* 特殊深色輸入框用於標題 */
         .title-input {
             border-bottom: 1px dashed var(--cream-gold);
             color: var(--cream-gold);
@@ -86,9 +79,7 @@
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
         }
 
-        .grid-square {
-            aspect-ratio: 1 / 1;
-        }
+        .grid-square { aspect-ratio: 1 / 1; }
 
         #toast {
             position: fixed;
@@ -108,23 +99,53 @@
             box-shadow: 0 15px 40px rgba(0,0,0,0.5);
             border: 2px solid var(--caramel-deep);
         }
+
+        /* 燈箱樣式 */
+        #lightbox {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        #lightbox img {
+            max-width: 100%;
+            max-height: 80vh;
+            border-radius: 8px;
+            box-shadow: 0 0 30px rgba(255,255,255,0.1);
+        }
+
+        /* 拖拉時的視覺效果 */
+        .sortable-ghost {
+            opacity: 0.4;
+            background: var(--caramel-light) !important;
+        }
     </style>
 </head>
 <body>
 
     <div id="toast">旅程進度已封存 🎞️</div>
 
+    <!-- 影像燈箱 -->
+    <div id="lightbox" onclick="closeLightbox()">
+        <img id="lightbox-img" src="" alt="放大圖">
+        <p class="absolute bottom-10 text-white/60 text-xs tracking-widest uppercase">點擊任何地方關閉</p>
+    </div>
+
     <!-- Header -->
     <header class="pt-20 pb-12 px-8 text-center">
         <div class="inline-block relative">
             <input type="text" id="trip-title" 
-                class="bg-transparent text-3xl font-black-coffee text-center w-full title-input"
+                class="bg-transparent text-3xl font-bold text-center w-full title-input"
                 value="2026.04 Busan" onchange="saveTripTitle()">
         </div>
         <p class="text-[12px] mt-5 tracking-[0.6em] font-black opacity-60 uppercase">山 海 間 的 足 跡 ． 漫 遊 記 事</p>
     </header>
 
-    <!-- 天氣 Widget (昭和儀表感) -->
+    <!-- 天氣 Widget -->
     <section class="px-6 mb-14">
         <div class="bg-[#2D1B0F] border border-white/10 rounded-2xl p-8 relative overflow-hidden shadow-2xl">
             <div class="flex justify-between items-start mb-10 relative z-10">
@@ -138,7 +159,7 @@
                     </div>
                 </div>
                 <button onclick="fetchWeather()" class="w-12 h-12 flex items-center justify-center rounded-xl bg-white/5 hover:bg-white/20 transition-all border border-white/10">
-                    <svg class="w-6 h-6 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+                    <svg class="w-6 h-6 text-white/60" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
                 </button>
             </div>
 
@@ -163,7 +184,7 @@
         <!-- JS 動態渲染 -->
     </main>
 
-    <!-- Bottom Nav (深色皮革感) -->
+    <!-- Bottom Nav -->
     <nav class="fixed bottom-8 left-8 right-8 h-20 bg-[#1A120B] rounded-[24px] shadow-2xl flex justify-around items-center px-4 z-50 border border-white/5">
         <button onclick="switchTab('packing')" class="nav-btn w-12 h-12 rounded-xl flex flex-col items-center justify-center transition-all duration-300 text-white/20" id="nav-packing">
             <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2M2 9h20v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9Z"/><path d="M12 12v3M16 9v3M8 9v3"/></svg>
@@ -182,33 +203,58 @@
     <script>
         // --- 狀態管理 ---
         let state = {
-            currentTab: 'photo',
+            currentTab: 'packing',
             tripTitle: '2026.04 Busan',
             packing: {
-                carry: [{ id: 1, text: '底片相機與備用電池', done: false, img: null }],
-                checked: [{ id: 2, text: '輕便防潑水長風衣', done: false, img: null }]
+                carry: [
+                    { id: 1, text: '護照/簽證/電子入境', done: false, img: null },
+                    { id: 2, text: '身分證/機票 (紙本+數位存檔)', done: false, img: null },
+                    { id: 3, text: '外幣現金/信用卡', done: false, img: null },
+                    { id: 4, text: '手機/行動電源/傳輸線', done: false, img: null },
+                    { id: 5, text: '萬國轉接頭', done: false, img: null },
+                    { id: 6, text: '相機/記憶卡/電池', done: false, img: null },
+                    { id: 7, text: '隨身藥品 (暈車藥/止痛藥)', done: false, img: null },
+                    { id: 8, text: '面紙/濕紙巾/護唇膏', done: false, img: null },
+                    { id: 9, text: '頸枕/眼罩/耳塞', done: false, img: null }
+                ],
+                checked: [
+                    { id: 10, text: '衣物 (依天數/天氣準備)', done: false, img: null },
+                    { id: 11, text: '貼身內衣褲/襪子', done: false, img: null },
+                    { id: 12, text: '睡衣/室內拖鞋', done: false, img: null },
+                    { id: 13, text: '盥洗用品 (牙刷/洗面乳)', done: false, img: null },
+                    { id: 14, text: '保養品/防曬乳/卸妝用品', done: false, img: null },
+                    { id: 15, text: '個人藥品/ok蹦', done: false, img: null },
+                    { id: 16, text: '髒衣收納袋', done: false, img: null },
+                    { id: 17, text: '雨具 (摺疊傘/雨衣)', done: false, img: null },
+                    { id: 18, text: '購物備用購物袋', done: false, img: null }
+                ]
             },
-            shopping: [{ id: 1, name: '昭和風手作玻璃杯', trans: '핸드메이드 유리잔', img: null }],
+            shopping: [{ id: 1, name: '在地手作回憶', trans: '로컬 추억', img: null }],
             photos: [
-                { id: 101, location: '海雲台海灘', img: null },
-                { id: 102, location: '膠囊列車(青沙浦)', img: null },
-                { id: 103, location: '甘川洞文化村', img: null }
+                { id: 101, location: '第一站', img: null },
+                { id: 102, location: '第二站', img: null },
+                { id: 103, location: '第三站', img: null }
             ],
-            planb: "若遇雨天，就躲進西面的老式茶房，讓音樂與影像填滿下午。"
+            planb: "若計畫趕不上變化，就隨性走入一間充滿香氣的店吧。"
         };
 
-        // --- 初始化 ---
         window.onload = () => {
-            const saved = localStorage.getItem('travel_retro_v9');
-            if (saved) state = JSON.parse(saved);
+            const saved = localStorage.getItem('travel_retro_final_v2');
+            if (saved) {
+                const loadedState = JSON.parse(saved);
+                // 檢查是否需要恢復護照項目到第一位
+                const hasPassport = loadedState.packing.carry.some(i => i.text.includes('護照'));
+                if (!hasPassport) {
+                    loadedState.packing.carry.unshift({ id: Date.now(), text: '護照/簽證/電子入境', done: false, img: null });
+                }
+                state = loadedState;
+            }
             document.getElementById('trip-title').value = state.tripTitle;
             switchTab(state.currentTab);
             fetchWeather();
         };
 
-        function saveState() {
-            localStorage.setItem('travel_retro_v9', JSON.stringify(state));
-        }
+        function saveState() { localStorage.setItem('travel_retro_final_v2', JSON.stringify(state)); }
 
         function showToast(msg) {
             const toast = document.getElementById('toast');
@@ -217,53 +263,46 @@
             setTimeout(() => { toast.style.opacity = '0'; }, 2000);
         }
 
+        // 燈箱功能
+        function openLightbox(src) {
+            if(!src) return;
+            const lb = document.getElementById('lightbox');
+            const img = document.getElementById('lightbox-img');
+            img.src = src;
+            lb.style.display = 'flex';
+        }
+
+        function closeLightbox() {
+            document.getElementById('lightbox').style.display = 'none';
+        }
+
         function saveTripTitle() {
             state.tripTitle = document.getElementById('trip-title').value;
             saveState();
             fetchWeather();
-            showToast("旅程主題已校正 🎙️");
+            showToast("座標已重新校準 🎙️");
         }
 
-        // --- 天氣 API ---
         async function fetchWeather() {
             const city = state.tripTitle.split(' ').pop() || 'Busan';
             try {
                 const res = await fetch(`https://wttr.in/${city}?format=j1`);
                 const data = await res.json();
                 const cur = data.current_condition[0];
-                
                 document.getElementById('weather-temp').innerText = cur.temp_C;
                 document.getElementById('weather-feels').innerText = `Feels Like ${cur.FeelsLikeC}°C`;
                 document.getElementById('weather-city').innerText = `${city}, ${data.nearest_area[0].country[0].value}`;
-                
                 const feels = parseInt(cur.FeelsLikeC);
                 const iconEl = document.getElementById('weather-icon');
-                
                 let advice = "";
-                if (feels > 25) {
-                    advice = "陽光熾熱。建議穿著輕便棉麻，準備好妳的墨鏡與遮陽具。";
-                    iconEl.innerText = "☀️";
-                    iconEl.className = "sun-anim";
-                } else if (feels > 18) {
-                    advice = "氣候爽朗。薄長袖加件隨性夾克，是漫步的最佳裝束。";
-                    iconEl.innerText = "🌤️";
-                    iconEl.className = "sun-anim";
-                } else if (feels > 10) {
-                    advice = "涼意漸濃。請務必準備防風外套，早晚溫差不可輕忽。";
-                    iconEl.innerText = "☁️";
-                    iconEl.className = "cloud-anim";
-                } else {
-                    advice = "嚴寒來襲。羽絨外套與暖手物為必需，建議多安排室內行程。";
-                    iconEl.innerText = "❄️";
-                    iconEl.className = "cloud-anim";
-                }
+                if (feels > 25) { advice = "陽光熾熱。建議輕便涼爽，防曬是這趟攝影旅行的重點。"; iconEl.innerText = "☀️"; iconEl.className = "sun-anim"; }
+                else if (feels > 18) { advice = "氣候宜人。薄衫配夾克，最適合漫步捕捉光影。"; iconEl.innerText = "🌤️"; iconEl.className = "sun-anim"; }
+                else if (feels > 10) { advice = "涼意漸濃。請務必準備防風外套，早晚溫差別輕忽。"; iconEl.innerText = "☁️"; iconEl.className = "cloud-drift"; }
+                else { advice = "嚴寒來襲。暖手物與大衣為必需，建議多停留室內空間。"; iconEl.innerText = "❄️"; iconEl.className = "cloud-drift"; }
                 document.getElementById('weather-advice').innerText = advice;
-            } catch (e) {
-                document.getElementById('weather-city').innerText = "連線頻率搜尋中...";
-            }
+            } catch (e) { document.getElementById('weather-city').innerText = "訊號搜尋中..."; }
         }
 
-        // --- 路由切換 ---
         function switchTab(tab) {
             state.currentTab = tab;
             saveState();
@@ -272,17 +311,42 @@
             const activeBtn = document.getElementById(`nav-${tab}`);
             activeBtn.classList.remove('text-white/20');
             activeBtn.classList.add('nav-active');
-
             const content = document.getElementById('main-content');
             content.innerHTML = ''; 
-
             if (tab === 'packing') renderPacking(content);
             else if (tab === 'shopping') renderShopping(content);
             else if (tab === 'photo') renderPhoto(content);
             else if (tab === 'settings') renderSettings(content);
         }
 
-        // --- 攝影靈感: 3x3 九宮格 ---
+        // 初始化拖拉功能
+        function initSortable(id, key, subKey = null) {
+            const el = document.getElementById(id);
+            if (!el) return;
+            Sortable.create(el, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                onEnd: function() {
+                    const items = Array.from(el.children);
+                    const newOrder = items.map(item => {
+                        const itemId = parseInt(item.getAttribute('data-id'));
+                        if (subKey) {
+                            return state[key][subKey].find(i => i.id === itemId);
+                        }
+                        return state[key].find(i => i.id === itemId);
+                    });
+
+                    if (subKey) {
+                        state[key][subKey] = newOrder;
+                    } else {
+                        state[key] = newOrder;
+                    }
+                    saveState();
+                    showToast("順序已重新排列 🎞️");
+                }
+            });
+        }
+
         function renderPhoto(el) {
             el.innerHTML = `
                 <div class="flex justify-between items-end mb-10 px-1">
@@ -292,68 +356,68 @@
                     </div>
                     <button onclick="addPhoto()" class="w-12 h-12 flex items-center justify-center rounded-xl bg-[#F2E8CF] shadow-lg border border-black/10 text-2xl font-black text-[#1A120B]">+</button>
                 </div>
-                <div class="grid grid-cols-3 gap-4">
+                <div id="photo-grid" class="grid grid-cols-3 gap-4">
                     ${state.photos.map(p => `
-                        <div class="grid-square retro-card overflow-hidden relative group">
-                            <div class="w-full h-full bg-black/5 flex items-center justify-center overflow-hidden">
+                        <div class="grid-square retro-card overflow-hidden relative group" data-id="${p.id}">
+                            <div class="w-full h-full bg-black/5 flex items-center justify-center overflow-hidden" onclick="openLightbox('${p.img}')">
                                 ${p.img ? `<img src="${p.img}" class="w-full h-full object-cover">` : '<span class="text-2xl opacity-10 font-black">🎞️</span>'}
-                                <label class="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 bg-white/80 backdrop-blur-sm transition-all cursor-pointer">
+                                <label class="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 bg-white/80 backdrop-blur-sm transition-all cursor-pointer" onclick="event.stopPropagation()">
                                     <input type="file" class="hidden" onchange="uploadImg(event, 'photo', ${p.id})">
                                     <span class="text-[#1A120B] text-[10px] font-black tracking-widest uppercase">Load</span>
                                 </label>
                             </div>
                             <div class="absolute bottom-0 left-0 right-0 bg-white/95 py-2.5 px-2.5 border-t border-black/5">
                                 <input type="text" value="${p.location || ''}" 
-                                    placeholder="地點..." 
+                                    placeholder="..." 
                                     onchange="updateLoc(${p.id}, this.value)"
-                                    class="text-[18px] w-full font-black p-0 border-none leading-none bg-transparent placeholder:opacity-20 text-[#1A120B]">
+                                    class="text-[18px] w-full font-black p-0 border-none leading-none bg-transparent text-[#1A120B]">
                             </div>
                             <button onclick="delPhoto(${p.id})" class="absolute top-0 right-0 w-6 h-6 bg-black text-white flex items-center justify-center font-bold text-[10px] rounded-bl-lg">✕</button>
                         </div>
                     `).join('')}
-                    <div onclick="addPhoto()" class="grid-square retro-card border-dashed border-black/20 flex items-center justify-center opacity-40">
-                        <span class="text-4xl font-light">+</span>
-                    </div>
                 </div>
             `;
+            initSortable('photo-grid', 'photos');
         }
 
-        // --- 行李清單 ---
         function renderPacking(el) {
             el.innerHTML = `
                 <div class="space-y-12">
-                    ${renderSection('carry', '✈️ Carry-on / 隨身收納', 'var(--aged-paper)')}
-                    ${renderSection('checked', '🧳 Checked / 託運行李', 'var(--aged-paper)')}
+                    ${renderSection('carry', '✈️ Carry-on / 隨身收納')}
+                    ${renderSection('checked', '🧳 Checked / 託運行李')}
                 </div>
             `;
+            initSortable('list-carry', 'packing', 'carry');
+            initSortable('list-checked', 'packing', 'checked');
         }
 
-        function renderSection(key, title, bgColor) {
+        function renderSection(key, title) {
             return `
                 <div>
                     <div class="flex justify-between items-center mb-6 px-1">
                         <h3 class="text-[14px] font-black tracking-[0.3em] uppercase text-white/40">${title}</h3>
                         <button onclick="addItem('${key}')" class="w-10 h-10 flex items-center justify-center rounded-xl bg-[#F2E8CF] shadow-md text-2xl font-black text-[#1A120B]">+</button>
                     </div>
-                    <div class="space-y-5">
+                    <div id="list-${key}" class="space-y-5">
                         ${state.packing[key].map(i => `
-                            <div class="retro-card p-6 flex flex-col gap-5">
+                            <div class="retro-card p-4 flex flex-col gap-4" data-id="${i.id}">
                                 <div class="flex justify-between items-center">
-                                    <div class="flex items-center gap-5">
-                                        <div onclick="toggleItem('${key}', ${i.id})" class="w-7 h-7 rounded-lg border-2 border-black/20 cursor-pointer flex items-center justify-center ${i.done ? 'bg-black border-black' : 'bg-transparent'}">
-                                            ${i.done ? '<span class="text-[14px] text-white font-black">✓</span>' : ''}
+                                    <div class="flex items-center gap-4">
+                                        <div onclick="toggleItem('${key}', ${i.id})" class="w-6 h-6 rounded border-2 border-black/20 cursor-pointer flex items-center justify-center ${i.done ? 'bg-black border-black' : 'bg-transparent'}">
+                                            ${i.done ? '<span class="text-[12px] text-white font-black">✓</span>' : ''}
                                         </div>
-                                        <span class="text-[19px] font-black ${i.done ? 'line-through opacity-20' : ''}">${i.text}</span>
+                                        <!-- 字體微調小一點 (15px) -->
+                                        <span class="text-[15px] font-black ${i.done ? 'line-through opacity-20' : ''}">${i.text}</span>
                                     </div>
-                                    <div class="flex gap-6 items-center">
+                                    <div class="flex gap-4 items-center">
                                         <label class="cursor-pointer opacity-30 hover:opacity-100 transition-opacity">
-                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
                                             <input type="file" class="hidden" onchange="uploadImg(event, '${key}', ${i.id})">
                                         </label>
                                         <button onclick="delItem('${key}', ${i.id})" class="text-xs font-black opacity-10">✕</button>
                                     </div>
                                 </div>
-                                ${i.img ? `<img src="${i.img}" class="w-full h-60 object-cover rounded-xl border border-black/5 shadow-inner">` : ''}
+                                ${i.img ? `<img src="${i.img}" class="w-full h-48 object-cover rounded-xl shadow-inner border border-black/5" onclick="openLightbox('${i.img}')">` : ''}
                             </div>
                         `).join('')}
                     </div>
@@ -361,35 +425,31 @@
             `;
         }
 
-        // --- 必買清單 ---
         function renderShopping(el) {
             el.innerHTML = `
                 <div class="flex justify-between items-center mb-10 px-1">
                     <h3 class="text-[14px] font-black tracking-[0.3em] text-white/40 uppercase">🛒 Wishlist / 採買紀念</h3>
                     <button onclick="addShop()" class="w-12 h-12 flex items-center justify-center rounded-xl bg-[#F2E8CF] shadow-lg text-2xl font-black text-[#1A120B]">+</button>
                 </div>
-                <div class="space-y-6">
+                <div id="list-shopping" class="space-y-6">
                     ${state.shopping.map(s => `
-                        <div class="retro-card p-8 border-r-[12px] border-[#A63D40]">
+                        <div class="retro-card p-6 border-r-[12px] border-[#A63D40]" data-id="${s.id}">
                             <div class="flex justify-between items-start mb-6">
-                                <div>
-                                    <p class="font-black text-[22px] mb-2 leading-tight">${s.name}</p>
-                                    <p class="text-[14px] text-blue-900 font-bold opacity-60 italic tracking-wide">Ref: ${s.trans || '---'}</p>
-                                </div>
+                                <div><p class="font-black text-[22px] mb-2 leading-tight">${s.name}</p><p class="text-[14px] text-blue-900 font-bold opacity-60 italic">Ref: ${s.trans || '---'}</p></div>
                                 <button onclick="delShop(${s.id})" class="opacity-10 font-bold">✕</button>
                             </div>
                             <div class="flex gap-5">
                                 <button onclick="transShop(${s.id})" class="text-[11px] font-black border-2 border-black px-6 py-3 rounded-xl hover:bg-black hover:text-white transition-all uppercase tracking-[0.2em]">Translate</button>
                                 <label class="text-[11px] font-black border-2 border-black px-6 py-3 rounded-xl cursor-pointer hover:bg-black hover:text-white transition-all uppercase tracking-[0.2em]">Image<input type="file" class="hidden" onchange="uploadImg(event, 'shop', ${s.id})"></label>
                             </div>
-                            ${s.img ? `<img src="${s.img}" class="w-full h-64 object-cover rounded-xl mt-8 shadow-md">` : ''}
+                            ${s.img ? `<img src="${s.img}" class="w-full h-52 object-cover rounded-xl mt-8 shadow-md" onclick="openLightbox('${s.img}')">` : ''}
                         </div>
                     `).join('')}
                 </div>
             `;
+            initSortable('list-shopping', 'shopping');
         }
 
-        // --- 設定與備份 ---
         function renderSettings(el) {
             el.innerHTML = `
                 <div class="space-y-12">
@@ -403,70 +463,29 @@
                         <h3 class="text-[14px] font-black border-l-8 border-[#F2E8CF] pl-5 tracking-[0.3em] uppercase text-white/60">💾 Backup / 資料歸檔</h3>
                         <div class="grid grid-cols-1 gap-5">
                             <button onclick="exportData()" class="py-6 rounded-2xl text-[12px] font-black bg-[#F2E8CF] text-[#1A120B] shadow-2xl tracking-[0.2em] uppercase">Export Archive (.json)</button>
-                            <label class="py-6 rounded-2xl text-[12px] font-black text-center border-2 border-[#F2E8CF] text-[#F2E8CF] cursor-pointer hover:bg-[#F2E8CF] hover:text-[#1A120B] transition-all shadow-xl tracking-[0.2em] uppercase">
-                                Import History
-                                <input type="file" class="hidden" onchange="importData(event)">
-                            </label>
+                            <label class="py-6 rounded-2xl text-[12px] font-black text-center border-2 border-[#F2E8CF] text-[#F2E8CF] cursor-pointer hover:bg-[#F2E8CF] hover:text-[#1A120B] transition-all shadow-xl tracking-[0.2em] uppercase">Import History<input type="file" class="hidden" onchange="importData(event)"></label>
                         </div>
                     </section>
                 </div>
             `;
         }
 
-        // --- 功能函數 ---
-        function addPhoto() {
-            state.photos.push({ id: Date.now(), location: '', img: null });
-            saveState(); renderPhoto(document.getElementById('main-content'));
-        }
-        function updateLoc(id, val) {
-            const p = state.photos.find(x => x.id === id);
-            if (p) p.location = val;
-            saveState();
-        }
-        function delPhoto(id) {
-            state.photos = state.photos.filter(p => p.id !== id);
-            saveState(); renderPhoto(document.getElementById('main-content'));
-        }
-        function addItem(key) {
-            const text = prompt("要收納什麼物品進去？");
-            if (text) {
-                state.packing[key].push({ id: Date.now(), text, done: false, img: null });
-                saveState(); switchTab('packing');
-            }
-        }
-        function toggleItem(key, id) {
-            const item = state.packing[key].find(i => i.id === id);
-            item.done = !item.done;
-            saveState(); switchTab('packing');
-        }
-        function delItem(key, id) {
-            state.packing[key] = state.packing[key].filter(i => i.id !== id);
-            saveState(); switchTab('packing');
-        }
-        function addShop() {
-            const name = prompt("想尋找什麼珍貴的回憶？");
-            if (name) {
-                state.shopping.push({ id: Date.now(), name, trans: '', img: null });
-                saveState(); switchTab('shopping');
-            }
-        }
+        function addPhoto() { state.photos.push({ id: Date.now(), location: '', img: null }); saveState(); renderPhoto(document.getElementById('main-content')); }
+        function updateLoc(id, val) { const p = state.photos.find(x => x.id === id); if (p) p.location = val; saveState(); }
+        function delPhoto(id) { state.photos = state.photos.filter(p => p.id !== id); saveState(); renderPhoto(document.getElementById('main-content')); }
+        function addItem(key) { const text = prompt("要收納什麼物品？"); if (text) { state.packing[key].push({ id: Date.now(), text, done: false, img: null }); saveState(); switchTab('packing'); } }
+        function toggleItem(key, id) { const item = state.packing[key].find(i => i.id === id); item.done = !item.done; saveState(); switchTab('packing'); }
+        function delItem(key, id) { state.packing[key] = state.packing[key].filter(i => i.id !== id); saveState(); switchTab('packing'); }
+        function addShop() { const name = prompt("想尋找什麼記憶？"); if (name) { state.shopping.push({ id: Date.now(), name, trans: '', img: null }); saveState(); switchTab('shopping'); } }
         function transShop(id) {
             const item = state.shopping.find(i => i.id === id);
             const mock = { '明信片': '엽서', '玻璃杯': '유리잔', '咖啡': '커피', '柴犬': '시바견' };
             const found = Object.keys(mock).find(k => item.name.includes(k));
-            item.trans = found ? mock[found] : "連線資料庫翻譯中...";
-            saveState(); switchTab('shopping');
-            showToast("翻譯已校正 🇰🇷");
+            item.trans = found ? mock[found] : "資料庫檢索中...";
+            saveState(); switchTab('shopping'); showToast("翻譯已校正 🇰🇷");
         }
-        function delShop(id) {
-            state.shopping = state.shopping.filter(i => i.id !== id);
-            saveState(); switchTab('shopping');
-        }
-        function savePlanB() {
-            state.planb = document.getElementById('planb').value;
-            saveState();
-            showToast("備案已存檔 📔");
-        }
+        function delShop(id) { state.shopping = state.shopping.filter(i => i.id !== id); saveState(); switchTab('shopping'); }
+        function savePlanB() { state.planb = document.getElementById('planb').value; saveState(); showToast("備案已存檔 📔"); }
         function uploadImg(event, type, id) {
             const file = event.target.files[0];
             if (!file || file.size > 1000000) { showToast("影像過大(限1MB)！"); return; }
@@ -476,32 +495,12 @@
                 if (type === 'carry' || type === 'checked') state.packing[type].find(i => i.id === id).img = base;
                 else if (type === 'photo') state.photos.find(p => p.id === id).img = base;
                 else if (type === 'shop') state.shopping.find(s => s.id === id).img = base;
-                saveState(); switchTab(state.currentTab);
-                showToast("影像已顯影 🎞️");
+                saveState(); switchTab(state.currentTab); showToast("影像已顯影 🎞️");
             };
             reader.readAsDataURL(file);
         }
-        function exportData() {
-            const blob = new Blob([JSON.stringify(state)], { type: 'application/json' });
-            const a = document.createElement('a');
-            a.href = URL.createObjectURL(blob);
-            a.download = `漫遊筆記備份-${state.tripTitle}.json`;
-            a.click();
-            showToast("備份已導出 📂");
-        }
-        function importData(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    state = JSON.parse(e.target.result);
-                    saveState();
-                    location.reload();
-                } catch (err) { showToast("檔案讀取失敗 😢"); }
-            };
-            reader.readAsText(file);
-        }
+        function exportData() { const blob = new Blob([JSON.stringify(state)], { type: 'application/json' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `漫遊筆記備份-${state.tripTitle}.json`; a.click(); showToast("備份已導出 📂"); }
+        function importData(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = (e) => { try { state = JSON.parse(e.target.result); saveState(); location.reload(); } catch (err) { showToast("讀取失敗 😢"); } }; reader.readAsText(file); }
     </script>
 </body>
 </html>
