@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>旅人時光筆記 | Traveler's Journal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=Quicksand:wght@500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --milk-tea: #F2E9E4;
+            --milk-tea-dark: #C9ADA7;
+            --morandi-blue: #9A8C98;
+            --morandi-green: #84A59D;
+            --morandi-pink: #F7D1CD;
+            --text-main: #4A4E69;
+        }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: var(--milk-tea);
+            color: var(--text-main);
+            padding-bottom: 100px;
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* 模擬金萱體的圓潤與骨架 */
+        .font-jx {
+            font-family: 'Noto Sans TC', sans-serif;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 28px;
+        }
+
+        .nav-active {
+            color: var(--morandi-green);
+            background: rgba(255, 255, 255, 0.8);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        .custom-shadow {
+            box-shadow: 0 15px 35px -5px rgba(74, 78, 105, 0.08);
+        }
+
+        .btn-scale:active { transform: scale(0.92); }
+        
+        /* 動態背景裝飾 */
+        .blob {
+            position: fixed;
+            z-index: -1;
+            filter: blur(50px);
+            opacity: 0.4;
+            border-radius: 50%;
+        }
+
+        input:focus, textarea:focus { outline: none; }
+        
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+    </style>
+</head>
+<body>
+
+    <!-- 背景裝飾圓點 -->
+    <div class="blob w-64 h-64 bg-[#F7D1CD] -top-10 -left-10"></div>
+    <div class="blob w-48 h-48 bg-[#B5C0D0] top-1/2 -right-10"></div>
+
+    <!-- Header: Editable Title -->
+    <header class="pt-12 pb-8 px-8 flex flex-col items-center">
+        <div class="relative inline-block">
+            <input type="text" id="trip-title" 
+                class="bg-transparent text-2xl font-jx text-center w-full border-none"
+                value="2026.04 Busan" onchange="saveTripTitle()">
+            <div class="absolute -bottom-1 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#C9ADA7] to-transparent opacity-40"></div>
+        </div>
+        <p id="current-date-display" class="text-[10px] mt-3 tracking-[0.2em] opacity-40 uppercase font-medium">記錄每一場山海間的相遇</p>
+    </header>
+
+    <!-- Weather Widget -->
+    <section class="px-6 mb-8">
+        <div class="glass-card p-6 custom-shadow relative overflow-hidden">
+            <div class="absolute top-0 right-0 p-2">
+                <button onclick="fetchWeather()" class="w-8 h-8 flex items-center justify-center rounded-full bg-white bg-opacity-40 btn-scale text-xs">↻</button>
+            </div>
+            <div class="flex flex-col gap-4">
+                <div class="flex items-center gap-2">
+                    <div id="weather-icon-bg" class="w-10 h-10 rounded-2xl bg-white flex items-center justify-center text-xl shadow-sm">☁️</div>
+                    <div>
+                        <h3 id="weather-city" class="text-xs font-bold">釜山, KR</h3>
+                        <p id="weather-desc" class="text-[10px] opacity-50">載入氣象資料中...</p>
+                    </div>
+                </div>
+                <div class="flex justify-between items-end">
+                    <div class="flex items-baseline gap-1">
+                        <span id="weather-temp" class="text-4xl font-light tracking-tighter">--</span>
+                        <span class="text-lg opacity-40">°C</span>
+                    </div>
+                    <div class="text-right max-w-[60%]">
+                        <p class="text-[10px] font-bold text-[#84A59D] mb-1 italic">給妳的穿搭小建議：</p>
+                        <p id="weather-advice" class="text-[10px] leading-relaxed opacity-70">正在分析溫差，請稍候...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Content Area -->
+    <main id="main-content" class="px-6">
+        <!-- JS Dynamic Injection -->
+    </main>
+
+    <!-- Bottom Navigation -->
+    <nav class="fixed bottom-6 left-6 right-6 h-20 glass-card custom-shadow flex justify-around items-center px-4 z-50">
+        <button onclick="switchTab('packing')" class="nav-btn w-14 h-14 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all duration-300" id="nav-packing">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 12h.01M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2m10 0h-2m-10 0H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-2"/><path d="M16 6V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2m0 0h8"/></svg>
+            <span class="text-[9px] font-bold">行李</span>
+        </button>
+        <button onclick="switchTab('shopping')" class="nav-btn w-14 h-14 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all duration-300" id="nav-shopping">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+            <span class="text-[9px] font-bold">必買</span>
+        </button>
+        <button onclick="switchTab('photo')" class="nav-btn w-14 h-14 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all duration-300" id="nav-photo">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            <span class="text-[9px] font-bold">靈感</span>
+        </button>
+        <button onclick="switchTab('planb')" class="nav-btn w-14 h-14 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all duration-300" id="nav-planb">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            <span class="text-[9px] font-bold">備案</span>
+        </button>
+    </nav>
+
+    <script>
+        // --- 狀態管理 ---
+        let state = {
+            currentTab: 'packing',
+            tripTitle: '2026.04 Busan',
+            packing: {
+                carry: [{ id: 1, text: '哈納的牽繩', done: false, img: null }],
+                checked: [{ id: 2, text: '登山鞋', done: false, img: null }]
+            },
+            shopping: [{ id: 1, name: '人蔘精華', trans: '홍삼 원액', img: null }],
+            photos: [{ id: 3, location: '海雲台藍線公園', img: null }],
+            planb: "釜山雨備：F1963 文創園區、新世界百貨汗蒸幕。"
+        };
+
+        // --- 初始化 ---
+        window.onload = () => {
+            const savedState = localStorage.getItem('travel_journal_v2');
+            if (savedState) state = JSON.parse(savedState);
+            document.getElementById('trip-title').value = state.tripTitle;
+            switchTab(state.currentTab);
+            fetchWeather();
+        };
+
+        function saveState() {
+            localStorage.setItem('travel_journal_v2', JSON.stringify(state));
+        }
+
+        function saveTripTitle() {
+            state.tripTitle = document.getElementById('trip-title').value;
+            saveState();
+            fetchWeather(); // 重抓天氣
+        }
+
+        // --- 路由切換 ---
+        function switchTab(tab) {
+            state.currentTab = tab;
+            saveState();
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('nav-active'));
+            document.getElementById(`nav-${tab}`).classList.add('nav-active');
+
+            const content = document.getElementById('main-content');
+            content.style.opacity = 0;
+            setTimeout(() => {
+                if (tab === 'packing') renderPacking(content);
+                else if (tab === 'shopping') renderShopping(content);
+                else if (tab === 'photo') renderPhoto(content);
+                else if (tab === 'planb') renderPlanB(content);
+                content.style.opacity = 1;
+            }, 100);
+        }
+
+        // --- 行李清單 ---
+        function renderPacking(el) {
+            el.innerHTML = `
+                <div class="space-y-8 animate-in fade-in duration-500">
+                    ${renderPackingSection('carry', '✈️ 手提行李 Carry-on', 'var(--morandi-blue)')}
+                    ${renderPackingSection('checked', '🧳 託運行李 Checked', 'var(--morandi-green)')}
+                </div>
+            `;
+        }
+
+        function renderPackingSection(key, title, color) {
+            return `
+                <div>
+                    <div class="flex justify-between items-center mb-4 px-2">
+                        <h3 class="font-jx text-xs" style="color: ${color}">${title}</h3>
+                        <button onclick="addItem('${key}')" class="w-8 h-8 glass-card flex items-center justify-center text-lg btn-scale shadow-sm">+</button>
+                    </div>
+                    <div class="space-y-3">
+                        ${state.packing[key].map(item => `
+                            <div class="glass-card p-4 custom-shadow flex flex-col gap-3">
+                                <div class="flex justify-between items-center">
+                                    <div class="flex items-center gap-3">
+                                        <div onclick="toggleCheck('${key}', ${item.id})" class="w-6 h-6 rounded-full border-2 border-[#C9ADA7] flex items-center justify-center cursor-pointer ${item.done ? 'bg-[#C9ADA7]' : 'bg-transparent'}">
+                                            ${item.done ? '<svg class="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>' : ''}
+                                        </div>
+                                        <span class="text-sm font-medium ${item.done ? 'line-through opacity-30' : ''}">${item.text}</span>
+                                    </div>
+                                    <div class="flex gap-4 items-center">
+                                        <label class="cursor-pointer opacity-30 hover:opacity-100 transition-opacity">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                                            <input type="file" class="hidden" onchange="uploadImg(event, '${key}', ${item.id})">
+                                        </label>
+                                        <button onclick="removeItem('${key}', ${item.id})" class="text-xs opacity-20 hover:opacity-100">✕</button>
+                                    </div>
+                                </div>
+                                ${item.img ? `<img src="${item.img}" class="w-full h-40 object-cover rounded-2xl shadow-inner">` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- 攝影靈感 ---
+        function renderPhoto(el) {
+            el.innerHTML = `
+                <div class="mb-6 flex justify-between items-center px-2">
+                    <div>
+                        <h3 class="font-jx text-xs text-[#9A8C98]">📷 攝影靈感牆</h3>
+                        <p class="text-[9px] opacity-40 mt-1">捕捉那些讓妳心動的瞬間</p>
+                    </div>
+                    <button onclick="addPhoto()" class="w-10 h-10 glass-card flex items-center justify-center text-xl btn-scale shadow-sm">+</button>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    ${state.photos.map(p => `
+                        <div class="glass-card overflow-hidden custom-shadow group relative">
+                            <div class="aspect-[3/4] bg-white bg-opacity-20 flex items-center justify-center">
+                                ${p.img ? `<img src="${p.img}" class="w-full h-full object-cover">` : '<span class="text-xs opacity-20">尚未上傳</span>'}
+                                <label class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black bg-opacity-20 transition-opacity cursor-pointer">
+                                    <span class="text-white text-xs font-bold">更換照片</span>
+                                    <input type="file" class="hidden" onchange="uploadImg(event, 'photo', ${p.id})">
+                                </label>
+                            </div>
+                            <div class="p-3 bg-white bg-opacity-60">
+                                <input type="text" value="${p.location || ''}" 
+                                    placeholder="標記地點..." 
+                                    onchange="updatePhotoLocation(${p.id}, this.value)"
+                                    class="bg-transparent text-[10px] w-full border-none font-bold placeholder:text-gray-300">
+                            </div>
+                            <button onclick="removePhoto(${p.id})" class="absolute top-2 right-2 w-6 h-6 bg-black bg-opacity-20 text-white rounded-full flex items-center justify-center text-[10px] btn-scale">✕</button>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        // --- 工具功能 ---
+        function updatePhotoLocation(id, val) {
+            const p = state.photos.find(item => item.id === id);
+            if (p) p.location = val;
+            saveState();
+        }
+
+        function addPhoto() {
+            state.photos.push({ id: Date.now(), location: '', img: null });
+            saveState();
+            renderPhoto(document.getElementById('main-content'));
+        }
+
+        function removePhoto(id) {
+            state.photos = state.photos.filter(p => p.id !== id);
+            saveState();
+            renderPhoto(document.getElementById('main-content'));
+        }
+
+        // --- 其他清單渲染 (必買 & 備案) ---
+        function renderShopping(el) {
+            el.innerHTML = `
+                <div class="flex justify-between items-center mb-6 px-2">
+                    <h3 class="font-jx text-xs text-[#F7D1CD]">🛒 旅行採買清單</h3>
+                    <button onclick="addShopping()" class="w-10 h-10 glass-card flex items-center justify-center text-xl btn-scale shadow-sm">+</button>
+                </div>
+                <div class="space-y-4">
+                    ${state.shopping.map(item => `
+                        <div class="glass-card p-5 custom-shadow">
+                            <div class="flex justify-between items-start mb-3">
+                                <div>
+                                    <p class="font-bold text-sm">${item.name}</p>
+                                    <p class="text-[10px] text-blue-400 opacity-60 mt-1 font-medium">${item.trans || '點擊下方翻譯獲得對照'}</p>
+                                </div>
+                                <button onclick="removeShopping(${item.id})" class="opacity-20 text-xs">✕</button>
+                            </div>
+                            <div class="flex gap-3">
+                                <button onclick="translateItem(${item.id})" class="text-[9px] bg-white px-3 py-1.5 rounded-full border border-gray-100 btn-scale shadow-sm">翻譯助手</button>
+                                <label class="text-[9px] bg-white px-3 py-1.5 rounded-full border border-gray-100 btn-scale shadow-sm cursor-pointer">
+                                    上傳照片<input type="file" class="hidden" onchange="uploadImg(event, 'shopping', ${item.id})">
+                                </label>
+                            </div>
+                            ${item.img ? `<img src="${item.img}" class="w-full h-44 object-cover rounded-2xl mt-4 shadow-sm">` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+        }
+
+        function renderPlanB(el) {
+            el.innerHTML = `
+                <div class="mb-6 px-2">
+                    <h3 class="font-jx text-xs text-[#4A4E69]">🗺️ 旅行備案空間</h3>
+                    <p class="text-[9px] opacity-40 mt-1 italic">給射手座的浪漫預演，讓隨性不被打擾。</p>
+                </div>
+                <div class="glass-card p-6 custom-shadow">
+                    <textarea id="planb-text" class="w-full h-80 bg-transparent text-xs leading-relaxed" 
+                        placeholder="寫下雨備方案、或是哈納可以去的備選景點..."
+                        onchange="savePlanB()">${state.planb}</textarea>
+                </div>
+            `;
+        }
+
+        // --- 通用功能 ---
+        async function fetchWeather() {
+            const city = state.tripTitle.split(' ').pop() || 'Busan';
+            try {
+                const response = await fetch(`https://wttr.in/${city}?format=j1`);
+                const data = await response.json();
+                const cur = data.current_condition[0];
+                const temp = cur.temp_C;
+                const feels = cur.FeelsLikeC;
+                
+                document.getElementById('weather-temp').innerText = temp;
+                document.getElementById('weather-feels').innerText = `體感 ${feels}°C`;
+                document.getElementById('weather-desc').innerText = cur.weatherDesc[0].value;
+                document.getElementById('weather-city').innerText = `${city}, ${data.nearest_area[0].country[0].value}`;
+                
+                const f = parseInt(feels);
+                let adv = "穿上最喜歡的衣服，出發吧！";
+                if (f > 25) adv = "陽光很烈，記得帶上草帽與墨鏡，哈納也要多喝水。";
+                else if (f > 18) adv = "氣溫宜人，輕便的長袖搭配薄針織衫最剛好。";
+                else if (f > 10) adv = "起風了，多層次穿搭是王道，圍巾可以點綴穿搭。";
+                else adv = "寒流來襲，把最暖的羽絨衣拿出來，計畫個汗蒸幕行程吧！";
+                document.getElementById('weather-advice').innerText = adv;
+            } catch (e) {
+                document.getElementById('weather-desc').innerText = "連線失敗";
+            }
+        }
+
+        function toggleCheck(key, id) {
+            const item = state.packing[key].find(i => i.id === id);
+            item.done = !item.done;
+            saveState(); switchTab('packing');
+        }
+
+        function removeItem(key, id) {
+            state.packing[key] = state.packing[key].filter(i => i.id !== id);
+            saveState(); switchTab('packing');
+        }
+
+        function addItem(key) {
+            const text = prompt("想要準備什麼呢？");
+            if (text) {
+                state.packing[key].push({ id: Date.now(), text, done: false, img: null });
+                saveState(); switchTab('packing');
+            }
+        }
+
+        function addShopping() {
+            const name = prompt("想買什麼送給自己或哈納？");
+            if (name) {
+                state.shopping.push({ id: Date.now(), name, trans: '', img: null });
+                saveState(); switchTab('shopping');
+            }
+        }
+
+        function removeShopping(id) {
+            state.shopping = state.shopping.filter(i => i.id !== id);
+            saveState(); switchTab('shopping');
+        }
+
+        function translateItem(id) {
+            const item = state.shopping.find(i => i.id === id);
+            const mockTrans = { '人蔘': '인삼', '面膜': '마스크팩', '零食': '과자', '泡麵': '라면', '柴犬': '시바견' };
+            const found = Object.keys(mockTrans).find(k => item.name.includes(k));
+            item.trans = found ? mockTrans[found] : "正在幫妳翻成韓文中...";
+            saveState(); switchTab('shopping');
+        }
+
+        function savePlanB() {
+            state.planb = document.getElementById('planb-text').value;
+            saveState();
+        }
+
+        function uploadImg(event, type, id) {
+            const file = event.target.files[0];
+            if (!file) return;
+            if (file.size > 800000) { alert("圖片有點太大囉，請選擇 800KB 以下的照片！"); return; }
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const base64 = e.target.result;
+                if (type === 'carry' || type === 'checked') {
+                    state.packing[type].find(i => i.id === id).img = base64;
+                } else if (type === 'shopping') {
+                    state.shopping.find(i => i.id === id).img = base64;
+                } else if (type === 'photo') {
+                    state.photos.find(i => i.id === id).img = base64;
+                }
+                saveState();
+                switchTab(state.currentTab);
+            };
+            reader.readAsDataURL(file);
+        }
+    </script>
+</body>
+</html>
